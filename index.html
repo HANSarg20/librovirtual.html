@@ -3,164 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca Virtual Inteligente</title>
+    <title>Biblioteca Virtual</title>
     
-    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Lucide Icons para iconos limpios y modernos -->
-    <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.378.0/dist/lucide.min.js"></script>
     
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Inter para un look limpio -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- PDF.js de Mozilla para leer PDFs -->
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
 
     <style>
-        /* Estilos personalizados para mejorar la apariencia */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-            color: #f3f4f6; /* text-gray-100 */
+        :root {
+            /* Paleta de colores sobria y de alto contraste */
+            --background-dark: #000000;
+            --background-med: #111111;
+            --background-light: #1f1f1f;
+            --accent-color: #ffffff;
+            --text-color: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
         }
 
-        /* Estilo para la barra de desplazamiento */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* Estilo de barra de desplazamiento minimalista */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #1f2937; /* bg-gray-800 */
+            background: var(--background-med); 
         }
         ::-webkit-scrollbar-thumb {
-            background: #4b5563; /* bg-gray-600 */
-            border-radius: 10px;
+            background-color: var(--border-color);
+            border-radius: 8px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* bg-gray-500 */
+            background-color: #4b5563;
         }
 
-        /* Animación para el indicador de carga */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .loader {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-left-color: #3b82f6; /* blue-500 */
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        /* Clases para los botones de control de audio */
+        /* Componentes de la UI */
         .control-btn {
-            @apply p-2 bg-gray-700 rounded-full text-gray-300 hover:bg-blue-600 hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+            @apply p-2 bg-background-light rounded-full text-text-color hover:bg-accent-color hover:text-background-dark transition-all duration-200;
+            border: 1px solid var(--border-color);
+        }
+        .tab-btn {
+            @apply w-1/2 py-3 text-center font-semibold tracking-wide cursor-pointer transition-all duration-200 border-b-2;
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        .book-item {
+             @apply p-3 rounded-lg cursor-pointer transition-all duration-200 border border-transparent bg-background-med hover:bg-background-light;
+        }
+        .book-item.active {
+            background-color: var(--accent-color);
+            color: var(--background-dark);
+            font-weight: 600;
+        }
+        .category-title {
+            @apply text-lg font-bold text-accent-color tracking-wide mt-4 mb-2 border-b border-border-color pb-2;
         }
 
-        /* Transiciones suaves */
-        .transition-all {
-            transition: all 0.3s ease-in-out;
-        }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="app" class="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div id="app" class="flex flex-col md:flex-row h-screen">
 
-        <!-- Panel Izquierdo: Lista de Libros -->
-        <aside class="w-full md:w-1/3 lg:w-1/4 bg-gray-800 p-4 flex flex-col border-r border-gray-700 overflow-y-auto">
-            <header class="mb-6 text-center">
-                <h1 class="text-2xl font-bold text-white flex items-center justify-center">
-                    <i data-lucide="library" class="mr-2"></i>
-                    Biblioteca Virtual
+        <!-- Panel Izquierdo: Bibliotecas -->
+        <aside class="w-full md:w-1/3 lg:w-1/4 bg-background-med flex flex-col border-r border-border-color">
+            <header class="p-4 text-center border-b border-border-color">
+                <h1 class="text-2xl font-bold text-accent-color flex items-center justify-center">
+                    <i data-lucide="library" class="mr-2"></i>Biblioteca Virtual
                 </h1>
             </header>
             
-            <button id="addBookBtn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center mb-4">
-                <i data-lucide="book-plus" class="mr-2"></i>
-                Añadir Libro (.txt)
-            </button>
-            <input type="file" id="fileInput" class="hidden" accept=".txt">
+            <div class="flex">
+                <div id="myLibraryTab" class="tab-btn active">Mi Biblioteca</div>
+                <div id="publicLibraryTab" class="tab-btn">Pública</div>
+            </div>
 
-            <h2 class="text-lg font-semibold text-gray-300 mb-2">Mis Libros</h2>
-            <div id="bookList" class="flex-grow space-y-2">
-                <!-- La lista de libros se generará aquí con JavaScript -->
+            <div class="p-4 flex-grow overflow-y-auto">
+                <div id="myLibraryContent">
+                    <button id="addBookBtn" class="w-full bg-accent-color text-background-dark font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-all flex items-center justify-center mb-4">
+                        <i data-lucide="upload" class="mr-2"></i>
+                        Añadir Archivo
+                    </button>
+                    <input type="file" id="fileInput" class="hidden" accept=".txt,.pdf">
+                    <div id="bookList" class="space-y-2"></div>
+                </div>
+
+                <div id="publicLibraryContent" class="hidden">
+                    <!-- Las categorías y libros se insertarán aquí dinámicamente -->
+                </div>
             </div>
         </aside>
 
-        <!-- Panel Derecho: Visor de Contenido -->
-        <main id="contentViewer" class="w-full md:w-2/3 lg:w-3/4 bg-gray-900 flex flex-col p-4 md:p-8 overflow-hidden">
-            <div id="welcomeMessage" class="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                <i data-lucide="book-open" class="w-24 h-24 mb-4"></i>
-                <h2 class="text-2xl font-bold">Bienvenido a tu Biblioteca Inteligente</h2>
-                <p class="mt-2 max-w-md">Selecciona un libro de la lista para empezar a leer, o añade uno nuevo para expandir tu colección.</p>
+        <!-- Panel Derecho: Visor -->
+        <main id="contentViewer" class="w-full md:w-2/3 lg:w-3/4 bg-background-dark flex flex-col p-4 md:p-8 overflow-hidden">
+             <div id="welcomeMessage" class="flex flex-col items-center justify-center h-full text-center text-text-muted">
+                <i data-lucide="book-open-check" class="w-24 h-24 mb-6 text-gray-500"></i>
+                <h2 class="text-3xl font-bold text-white">Bienvenido a tu Biblioteca</h2>
+                <p class="mt-2 text-lg max-w-md">Selecciona un texto para comenzar o añade tus propios archivos.</p>
             </div>
 
             <div id="bookContent" class="hidden flex-col h-full overflow-hidden">
-                <!-- Cabecera del libro -->
-                <div class="flex-shrink-0 mb-4 pb-4 border-b border-gray-700">
+                <div class="flex-shrink-0 mb-4 pb-4 border-b border-border-color">
                     <h2 id="bookTitle" class="text-3xl font-bold text-white truncate"></h2>
-                    <div class="flex items-center justify-between mt-2">
-                        <button id="showOriginalBtn" class="hidden text-sm text-blue-400 hover:text-blue-300 transition-all">
-                            &larr; Volver al texto original
-                        </button>
-                        <button id="deleteBookBtn" class="text-sm text-red-400 hover:text-red-300 transition-all flex items-center">
-                            <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
-                            Eliminar libro
-                        </button>
+                     <div class="flex items-center justify-between mt-2">
+                        <button id="showOriginalBtn" class="hidden text-sm text-accent-color hover:opacity-80 transition-all">&larr; Volver al texto original</button>
+                        <button id="deleteBookBtn" class="text-sm text-red-500 hover:text-red-400 transition-all flex items-center"><i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>Eliminar</button>
                     </div>
                 </div>
 
-                <!-- Controles Principales -->
-                <div id="controls" class="flex-shrink-0 bg-gray-800 p-3 rounded-lg mb-4 flex flex-wrap items-center gap-4 justify-between">
-                    <!-- Controles de IA y Audio -->
+                <div id="controls" class="flex-shrink-0 bg-background-med p-3 rounded-lg mb-4 flex flex-wrap items-center gap-4 justify-between border border-border-color">
                     <div class="flex items-center gap-3">
-                        <button id="summarizeBtn" title="Resumir con IA" class="control-btn bg-purple-600 hover:bg-purple-700">
-                            <i data-lucide="brain-circuit"></i>
-                        </button>
+                        <button id="summarizeBtn" title="Resumir con IA" class="control-btn"><i data-lucide="brain-circuit"></i></button>
                         <button id="playBtn" title="Reproducir" class="control-btn"><i data-lucide="play"></i></button>
                         <button id="pauseBtn" title="Pausar" class="control-btn hidden"><i data-lucide="pause"></i></button>
                         <button id="stopBtn" title="Detener" class="control-btn"><i data-lucide="stop-circle"></i></button>
                     </div>
-                    
-                    <!-- Controles de Voz y Velocidad -->
                     <div class="flex items-center gap-4 flex-grow md:flex-grow-0">
-                        <select id="voiceSelect" class="bg-gray-700 text-white rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                        <select id="voiceSelect" class="bg-background-light text-white rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-color"></select>
                         <div class="flex items-center gap-2 text-sm">
                             <i data-lucide="gauge-circle"></i>
                             <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1" class="w-24 cursor-pointer">
-                            <span id="speedValue" class="w-8 text-center">1.0x</span>
+                            <span id="speedValue" class="w-10 text-center">1.0x</span>
                         </div>
                     </div>
-
-                    <!-- Controles para Compartir -->
                     <div class="flex items-center gap-3">
-                        <button onclick="share('whatsapp')" title="Compartir en WhatsApp" class="control-btn bg-green-500 hover:bg-green-600"><i data-lucide="message-circle"></i></button>
-                        <button onclick="share('facebook')" title="Compartir en Facebook" class="control-btn bg-blue-700 hover:bg-blue-800"><i data-lucide="facebook"></i></button>
-                        <button onclick="share('copy')" title="Copiar para Instagram, TikTok, etc." class="control-btn bg-pink-500 hover:bg-pink-600"><i data-lucide="copy"></i></button>
+                        <button onclick="share('whatsapp')" title="Compartir en WhatsApp" class="control-btn"><i data-lucide="message-circle"></i></button>
+                        <button onclick="share('facebook')" title="Compartir en Facebook" class="control-btn"><i data-lucide="facebook"></i></button>
+                        <button onclick="share('copy')" title="Copiar Texto" class="control-btn"><i data-lucide="copy"></i></button>
                     </div>
                 </div>
 
-                <!-- Área de Texto del Libro -->
-                <div id="textContentWrapper" class="flex-grow overflow-y-auto bg-gray-800/50 p-6 rounded-lg relative">
-                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-10">
-                        <div class="loader"></div>
-                        <p class="mt-4 text-lg font-semibold">La IA está resumiendo el texto...</p>
+                <div class="flex-grow overflow-y-auto bg-background-med p-6 rounded-lg relative border border-border-color">
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-background-dark bg-opacity-80 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                        <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <p class="mt-4 text-lg font-semibold">Procesando...</p>
                     </div>
-                    <p id="textContent" class="text-gray-300 leading-relaxed whitespace-pre-wrap"></p>
+                    <p id="textContent" class="text-text-color text-lg leading-relaxed whitespace-pre-wrap"></p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Notificación Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300">
-        Texto copiado al portapapeles.
-    </div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-accent-color text-background-dark font-semibold py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- ELEMENTOS DEL DOM ---
+        // --- BIBLIOTECA PÚBLICA DE TEXTOS (REESTRUCTURADA) ---
+        const publicLibrary = {
+            "Ciencia de la Computación": [
+                {
+                    title: "Algoritmos Fundamentales",
+                    content: `Un algoritmo es una secuencia de instrucciones para resolver un problema. Son la base de toda la programación. Características clave: finitud (debe terminar), definibilidad (pasos claros), entrada, salida y efectividad.`
+                },
+                {
+                    title: "Introducción a Redes (OSI)",
+                    content: `Una red conecta dispositivos para compartir recursos. El Modelo OSI es un marco conceptual que divide la comunicación de red en 7 capas, desde la física (cables) hasta la de aplicación (software).`
+                }
+            ],
+            "Física": [
+                {
+                    title: "Leyes del Movimiento de Newton",
+                    content: `1. Inercia: Un objeto permanece en su estado de movimiento a menos que una fuerza actúe sobre él.\n2. Fuerza: F = ma (Fuerza = masa × aceleración).\n3. Acción-Reacción: Para cada acción, hay una reacción igual y opuesta.`
+                }
+            ],
+            "Química": [
+                {
+                    title: "El Átomo y sus Partículas",
+                    content: `El átomo es la unidad básica de un elemento. Contiene un núcleo con protones (carga +) y neutrones (sin carga), y electrones (carga -) que orbitan el núcleo. El número de protones define el elemento.`
+                }
+            ],
+            "Álgebra": [
+                 {
+                    title: "Fórmula Cuadrática",
+                    content: `Se usa para resolver ecuaciones de la forma ax² + bx + c = 0. La solución es x = [-b ± sqrt(b²-4ac)] / 2a. El 'discriminante' (b²-4ac) determina el tipo de soluciones.`
+                }
+            ],
+            "Geometría": [
+                {
+                    title: "Teorema de Pitágoras",
+                    content: `En un triángulo rectángulo, el cuadrado de la hipotenusa (lado c) es igual a la suma de los cuadrados de los otros dos lados (a y b). Fórmula: a² + b² = c².`
+                }
+            ],
+             "Aritmética": [
+                {
+                    title: "Operaciones Básicas",
+                    content: `La aritmética es la rama más antigua de las matemáticas, centrada en el estudio de los números y las operaciones básicas: suma, resta, multiplicación y división. Estas operaciones son los pilares para todo cálculo matemático.`
+                }
+            ],
+            "Trigonometría": [
+                {
+                    title: "Funciones Trigonométricas",
+                    content: `La trigonometría estudia las relaciones entre los ángulos y los lados de los triángulos. Las tres funciones principales son:\n- Seno (sin): cateto opuesto / hipotenusa\n- Coseno (cos): cateto adyacente / hipotenusa\n- Tangente (tan): cateto opuesto / cateto adyacente`
+                }
+            ]
+        };
+
+        function initializeApp() {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.worker.js`;
+
+            const myLibraryTab = document.getElementById('myLibraryTab');
+            const publicLibraryTab = document.getElementById('publicLibraryTab');
+            const myLibraryContent = document.getElementById('myLibraryContent');
+            const publicLibraryContent = document.getElementById('publicLibraryContent');
             const bookList = document.getElementById('bookList');
             const addBookBtn = document.getElementById('addBookBtn');
             const fileInput = document.getElementById('fileInput');
@@ -172,8 +235,6 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const showOriginalBtn = document.getElementById('showOriginalBtn');
             const deleteBookBtn = document.getElementById('deleteBookBtn');
-
-            // Controles de audio
             const playBtn = document.getElementById('playBtn');
             const pauseBtn = document.getElementById('pauseBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -182,136 +243,181 @@
             const speedValue = document.getElementById('speedValue');
             const toast = document.getElementById('toast');
 
-            // --- ESTADO DE LA APLICACIÓN ---
-            let library = [];
-            let currentBookId = null;
+            let userLibrary = [];
+            let currentBook = { id: null, source: null };
             let originalContent = '';
             let isSpeaking = false;
             let utterance = null;
             let voices = [];
 
-            // --- INICIALIZACIÓN ---
             function init() {
-                loadLibrary();
-                renderBookList();
+                loadUserLibrary();
+                renderUserBookList();
+                renderPublicLibrary();
                 setupEventListeners();
-
-                // FIX: Se asegura de que la librería de iconos (Lucide) se haya cargado
-                // antes de intentar renderizarlos. Esto previene una "race condition"
-                // donde el script principal se ejecuta antes de que el script de iconos esté listo.
-                const tryCreateIcons = () => {
-                    if (window.lucide) {
-                        lucide.createIcons();
-                    } else {
-                        // Si lucide no está listo, se intenta de nuevo en 100ms
-                        setTimeout(tryCreateIcons, 100);
-                    }
-                };
-                tryCreateIcons();
-
+                lucide.createIcons();
                 populateVoiceList();
-
-                // Intentar cargar voces de nuevo si cambian (necesario en algunos navegadores)
                 if (speechSynthesis.onvoiceschanged !== undefined) {
                     speechSynthesis.onvoiceschanged = populateVoiceList;
                 }
             }
-
-            // --- GESTIÓN DE LA BIBLIOTECA ---
-            function loadLibrary() {
-                const savedLibrary = localStorage.getItem('virtualLibrary');
-                library = savedLibrary ? JSON.parse(savedLibrary) : [];
-                if (library.length === 0) {
-                    // Añadir un libro de ejemplo si la biblioteca está vacía
-                    library.push({
-                        id: Date.now(),
-                        title: 'Libro de Bienvenida',
-                        content: `¡Bienvenido a tu Biblioteca Virtual Inteligente!
-
-Este es un libro de ejemplo para que puedas probar todas las funcionalidades.
-
-1.  **Añade tus propios libros**: Haz clic en el botón "Añadir Libro" para subir tus propios archivos de texto (.txt).
-2.  **Resume con IA**: Selecciona este libro y pulsa el botón con el icono del cerebro (Resumir con IA) para obtener un resumen automático.
-3.  **Escucha el texto**: Usa los controles de audio para reproducir, pausar y detener la lectura en voz alta.
-4.  **Personaliza la voz**: Elige diferentes voces y ajusta la velocidad de lectura a tu gusto.
-5.  **Comparte**: Selecciona un fragmento de texto y compártelo en tus redes sociales.
-
-¡Explora y disfruta de una nueva forma de leer!`
-                    });
-                    saveLibrary();
+            
+            function switchTab(tab) {
+                if (tab === 'my') {
+                    myLibraryTab.classList.add('active');
+                    publicLibraryTab.classList.remove('active');
+                    myLibraryContent.classList.remove('hidden');
+                    publicLibraryContent.classList.add('hidden');
+                } else {
+                    myLibraryTab.classList.remove('active');
+                    publicLibraryTab.classList.add('active');
+                    myLibraryContent.classList.add('hidden');
+                    publicLibraryContent.classList.remove('hidden');
                 }
             }
 
-            function saveLibrary() {
-                localStorage.setItem('virtualLibrary', JSON.stringify(library));
+            function renderPublicLibrary() {
+                let html = '';
+                for (const category in publicLibrary) {
+                    html += `<h3 class="category-title">${category}</h3>`;
+                    html += '<div class="space-y-2">';
+                    publicLibrary[category].forEach((book, index) => {
+                        const bookId = `${category}-${index}`;
+                        html += `<div class="book-item" data-id="${bookId}" data-source="public">${book.title}</div>`;
+                    });
+                    html += '</div>';
+                }
+                publicLibraryContent.innerHTML = html;
+                
+                publicLibraryContent.querySelectorAll('.book-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const [category, index] = id.split('-');
+                        const book = publicLibrary[category][index];
+                        displayBook(id, 'public', book.title, book.content);
+                    });
+                });
             }
 
-            function renderBookList() {
+            function loadUserLibrary() {
+                const savedLibrary = localStorage.getItem('virtualLibrary');
+                userLibrary = savedLibrary ? JSON.parse(savedLibrary) : [];
+            }
+
+            function saveUserLibrary() {
+                localStorage.setItem('virtualLibrary', JSON.stringify(userLibrary));
+            }
+
+            function renderUserBookList() {
                 bookList.innerHTML = '';
-                if (library.length === 0) {
-                    bookList.innerHTML = `<p class="text-gray-500 text-center mt-4">Tu biblioteca está vacía.</p>`;
+                if (userLibrary.length === 0) {
+                    bookList.innerHTML = `<p class="text-text-muted text-center mt-4">Tu biblioteca está vacía.</p>`;
                     return;
                 }
-                library.forEach(book => {
+                userLibrary.forEach(book => {
                     const bookElement = document.createElement('div');
-                    bookElement.className = `p-3 rounded-lg cursor-pointer transition-all ${book.id === currentBookId ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`;
+                    bookElement.className = `book-item`;
                     bookElement.textContent = book.title;
                     bookElement.dataset.id = book.id;
-                    bookElement.addEventListener('click', () => displayBook(book.id));
+                    bookElement.dataset.source = 'user';
+                    bookElement.addEventListener('click', () => {
+                         const bookData = userLibrary.find(b => b.id === book.id);
+                         displayBook(bookData.id, 'user', bookData.title, bookData.content);
+                    });
                     bookList.appendChild(bookElement);
+                });
+                updateActiveBookHighlight();
+            }
+
+            function updateActiveBookHighlight() {
+                document.querySelectorAll('.book-item').forEach(item => {
+                    const isActive = item.dataset.id == currentBook.id && item.dataset.source === currentBook.source;
+                    item.classList.toggle('active', isActive);
                 });
             }
 
             function handleFileUpload(event) {
                 const file = event.target.files[0];
-                if (file && file.type === "text/plain") {
+                if (!file) return;
+
+                loadingOverlay.classList.remove('hidden');
+
+                if (file.type === "text/plain") {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        const newBook = {
-                            id: Date.now(),
-                            title: file.name.replace('.txt', ''),
-                            content: e.target.result
-                        };
-                        library.push(newBook);
-                        saveLibrary();
-                        renderBookList();
-                        displayBook(newBook.id);
+                        addBookToLibrary(file.name.replace('.txt', ''), e.target.result);
+                        loadingOverlay.classList.add('hidden');
                     };
                     reader.readAsText(file);
+                } else if (file.type === "application/pdf") {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const typedarray = new Uint8Array(e.target.result);
+                        pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                            let fullText = '';
+                            const numPages = pdf.numPages;
+                            let pagesPromises = Array.from({length: numPages}, (_, i) =>
+                                pdf.getPage(i + 1).then(page =>
+                                    page.getTextContent().then(textContent =>
+                                        textContent.items.map(item => item.str).join(' ')
+                                    )
+                                )
+                            );
+                            Promise.all(pagesPromises).then(pagesText => {
+                                fullText = pagesText.join('\n\n');
+                                addBookToLibrary(file.name.replace('.pdf', ''), fullText);
+                            }).catch(err => {
+                                console.error("Error procesando PDF:", err);
+                                showToast("Error al procesar el PDF.", "error");
+                            }).finally(() => {
+                                loadingOverlay.classList.add('hidden');
+                            });
+                        });
+                    };
+                    reader.readAsArrayBuffer(file);
                 } else {
-                    showToast("Por favor, sube un archivo .txt", "error");
+                    showToast("Formato no soportado. Sube .txt o .pdf", "error");
+                    loadingOverlay.classList.add('hidden');
                 }
-                // Resetear el input para permitir subir el mismo archivo de nuevo
                 fileInput.value = '';
             }
 
-            function displayBook(id) {
-                const book = library.find(b => b.id === id);
-                if (!book) return;
-
-                currentBookId = id;
-                originalContent = book.content;
+            function addBookToLibrary(title, content) {
+                const newBook = { id: Date.now(), title, content };
+                userLibrary.push(newBook);
+                saveUserLibrary();
+                renderUserBookList();
+                displayBook(newBook.id, 'user', newBook.title, newBook.content);
+                switchTab('my');
+            }
+            
+            function displayBook(id, source, title, content) {
+                currentBook = { id, source };
+                originalContent = content;
                 
                 welcomeMessage.classList.add('hidden');
                 bookContent.classList.remove('hidden');
                 bookContent.classList.add('flex');
                 
-                bookTitle.textContent = book.title;
-                textContent.textContent = book.content;
+                bookTitle.textContent = title;
+                textContent.textContent = content;
+                
+                deleteBookBtn.style.display = source === 'user' ? 'flex' : 'none';
                 
                 showOriginalBtn.classList.add('hidden');
                 stopSpeech();
-                renderBookList(); // Para actualizar el resaltado del libro activo
+                updateActiveBookHighlight();
             }
 
             function deleteCurrentBook() {
-                if (!currentBookId) return;
+                if (!currentBook.id || currentBook.source !== 'user') return;
                 
-                if (confirm(`¿Estás seguro de que quieres eliminar "${library.find(b => b.id === currentBookId).title}"?`)) {
-                    library = library.filter(b => b.id !== currentBookId);
-                    currentBookId = null;
-                    saveLibrary();
-                    renderBookList();
+                const bookToDelete = userLibrary.find(b => b.id === currentBook.id);
+                if (confirm(`¿Confirmas la eliminación de "${bookToDelete.title}"?`)) {
+                    userLibrary = userLibrary.filter(b => b.id !== currentBook.id);
+                    currentBook = { id: null, source: null };
+                    saveUserLibrary();
+                    renderUserBookList();
                     
                     bookContent.classList.add('hidden');
                     bookContent.classList.remove('flex');
@@ -320,80 +426,52 @@ Este es un libro de ejemplo para que puedas probar todas las funcionalidades.
                 }
             }
 
-            // --- FUNCIONALIDAD DE IA (GEMINI) ---
             async function summarizeText() {
-                if (!currentBookId) return;
-
-                const book = library.find(b => b.id === currentBookId);
-                const textToSummarize = book.content;
-
-                if (textToSummarize.length < 100) {
-                     showToast("El texto es demasiado corto para resumir.", "error");
+                if (!currentBook.id) return;
+                const textToSummarize = originalContent;
+                if (textToSummarize.length < 50) {
+                     showToast("El texto es muy corto para resumir.", "error");
                      return;
                 }
-
                 loadingOverlay.classList.remove('hidden');
                 summarizeBtn.disabled = true;
-
                 try {
-                    const prompt = `Por favor, resume el siguiente texto de manera concisa y clara, extrayendo las ideas principales. El resumen debe ser en español:\n\n---\n\n${textToSummarize}`;
-                    
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                    const payload = { contents: chatHistory };
-                    const apiKey = ""; // La clave API será gestionada por el entorno de ejecución
+                    const prompt = `Resume el siguiente texto de forma clara y concisa en español, extrayendo las ideas clave:\n\n---\n\n${textToSummarize}`;
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                    const apiKey = ""; 
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
-                    if (!response.ok) {
-                        throw new Error(`Error de la API: ${response.statusText}`);
-                    }
-
+                    if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
                     const result = await response.json();
-
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const summary = result.candidates[0].content.parts[0].text;
-                        textContent.textContent = summary;
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        textContent.textContent = result.candidates[0].content.parts[0].text;
                         showOriginalBtn.classList.remove('hidden');
                     } else {
-                        throw new Error("La respuesta de la API no contiene un resumen válido.");
+                        throw new Error("Respuesta de API no válida.");
                     }
-
                 } catch (error) {
                     console.error("Error al resumir:", error);
-                    textContent.textContent = "Error: No se pudo generar el resumen. Por favor, inténtalo de nuevo más tarde.";
+                    textContent.textContent = "Error: No se pudo generar el resumen.";
                 } finally {
                     loadingOverlay.classList.add('hidden');
                     summarizeBtn.disabled = false;
                 }
             }
 
-            // --- FUNCIONALIDAD DE TEXTO A VOZ (TTS) ---
             function populateVoiceList() {
                 voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es'));
-                voiceSelect.innerHTML = '';
-                if(voices.length === 0) {
-                    const option = document.createElement('option');
-                    option.textContent = 'No hay voces en español';
-                    voiceSelect.appendChild(option);
-                    return;
-                }
+                voiceSelect.innerHTML = voices.length ? '' : '<option>No hay voces en español</option>';
                 voices.forEach(voice => {
                     const option = document.createElement('option');
                     option.textContent = `${voice.name} (${voice.lang})`;
-                    option.setAttribute('data-lang', voice.lang);
                     option.setAttribute('data-name', voice.name);
                     voiceSelect.appendChild(option);
                 });
             }
-
             function playSpeech() {
                 if (speechSynthesis.speaking) {
                     speechSynthesis.resume();
@@ -401,107 +479,53 @@ Este es un libro de ejemplo para que puedas probar todas las funcionalidades.
                     updatePlayPauseButtons();
                     return;
                 }
-                
-                const textToSpeak = textContent.textContent;
-                utterance = new SpeechSynthesisUtterance(textToSpeak);
-                
-                const selectedVoiceName = voiceSelect.selectedOptions[0].getAttribute('data-name');
-                const selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
-
+                utterance = new SpeechSynthesisUtterance(textContent.textContent);
+                const selectedVoice = voices.find(v => v.name === voiceSelect.selectedOptions[0]?.dataset.name);
+                if (selectedVoice) utterance.voice = selectedVoice;
                 utterance.rate = parseFloat(speedRange.value);
-                
-                utterance.onstart = () => {
-                    isSpeaking = true;
-                    updatePlayPauseButtons();
-                };
-
-                utterance.onend = () => {
-                    isSpeaking = false;
-                    updatePlayPauseButtons();
-                };
-
-                utterance.onerror = (event) => {
-                    console.error('SpeechSynthesisUtterance.onerror', event);
-                    isSpeaking = false;
-                    updatePlayPauseButtons();
-                    showToast("Error al reproducir el audio.", "error");
-                };
-                
+                utterance.onstart = () => { isSpeaking = true; updatePlayPauseButtons(); };
+                utterance.onend = () => { isSpeaking = false; updatePlayPauseButtons(); };
+                utterance.onerror = () => { isSpeaking = false; updatePlayPauseButtons(); showToast("Error al reproducir audio.", "error"); };
                 speechSynthesis.speak(utterance);
             }
-
             function pauseSpeech() {
                 speechSynthesis.pause();
                 isSpeaking = false;
                 updatePlayPauseButtons();
             }
-
             function stopSpeech() {
                 speechSynthesis.cancel();
                 isSpeaking = false;
                 updatePlayPauseButtons();
             }
-
             function updatePlayPauseButtons() {
-                if (isSpeaking) {
-                    playBtn.classList.add('hidden');
-                    pauseBtn.classList.remove('hidden');
-                } else {
-                    playBtn.classList.remove('hidden');
-                    pauseBtn.classList.add('hidden');
-                }
+                playBtn.classList.toggle('hidden', isSpeaking);
+                pauseBtn.classList.toggle('hidden', !isSpeaking);
             }
 
-
-            // --- FUNCIONALIDAD PARA COMPARTIR ---
             window.share = function(platform) {
-                let textToShare = window.getSelection().toString().trim();
-                if (!textToShare) {
-                    textToShare = textContent.textContent.substring(0, 280) + '...';
-                }
-                
+                let textToShare = window.getSelection().toString().trim() || textContent.textContent.substring(0, 280) + '...';
                 const encodedText = encodeURIComponent(textToShare);
-
-                switch (platform) {
-                    case 'whatsapp':
-                        window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
-                        break;
-                    case 'facebook':
-                        window.open(`https://www.facebook.com/sharer/sharer.php?u=example.com&quote=${encodedText}`, '_blank');
-                        break;
-                    case 'copy':
-                        navigator.clipboard.writeText(textToShare).then(() => {
-                            showToast("Texto copiado al portapapeles");
-                        }).catch(err => {
-                            console.error('Error al copiar texto: ', err);
-                            showToast("No se pudo copiar el texto", "error");
-                        });
-                        break;
+                const url = platform === 'whatsapp' ? `https://api.whatsapp.com/send?text=${encodedText}` : `https://www.facebook.com/sharer/sharer.php?u=example.com&quote=${encodedText}`;
+                if (platform === 'copy') {
+                    navigator.clipboard.writeText(textToShare).then(() => showToast("Texto copiado")).catch(() => showToast("No se pudo copiar", "error"));
+                } else {
+                    window.open(url, '_blank');
                 }
             }
-
             function showToast(message, type = 'success') {
                 toast.textContent = message;
-                toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-                
-                // Animar entrada
+                toast.style.backgroundColor = type === 'success' ? 'var(--accent-color)' : '#ef4444';
+                toast.style.color = type === 'success' ? 'var(--background-dark)' : '#ffffff';
+                toast.classList.remove('opacity-0', 'translate-y-10');
                 setTimeout(() => {
-                    toast.classList.remove('opacity-0', 'translate-y-10');
-                    toast.classList.add('opacity-100', 'translate-y-0');
-                }, 10);
-
-                // Animar salida
-                setTimeout(() => {
-                    toast.classList.remove('opacity-100', 'translate-y-0');
                     toast.classList.add('opacity-0', 'translate-y-10');
                 }, 3000);
             }
 
-            // --- EVENT LISTENERS ---
             function setupEventListeners() {
+                myLibraryTab.addEventListener('click', () => switchTab('my'));
+                publicLibraryTab.addEventListener('click', () => switchTab('public'));
                 addBookBtn.addEventListener('click', () => fileInput.click());
                 fileInput.addEventListener('change', handleFileUpload);
                 summarizeBtn.addEventListener('click', summarizeText);
@@ -510,22 +534,28 @@ Este es un libro de ejemplo para que puedas probar todas las funcionalidades.
                     showOriginalBtn.classList.add('hidden');
                 });
                 deleteBookBtn.addEventListener('click', deleteCurrentBook);
-
-                // TTS Listeners
                 playBtn.addEventListener('click', playSpeech);
                 pauseBtn.addEventListener('click', pauseSpeech);
                 stopBtn.addEventListener('click', stopSpeech);
-                speedRange.addEventListener('input', (e) => {
+                speedRange.addEventListener('input', e => {
                     const speed = parseFloat(e.target.value).toFixed(1);
                     speedValue.textContent = `${speed}x`;
-                    if (speechSynthesis.speaking) {
-                        utterance.rate = speed;
-                    }
+                    if (speechSynthesis.speaking) utterance.rate = speed;
                 });
             }
 
-            // Iniciar la aplicación
             init();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const waitForLibraries = () => {
+                if (window.pdfjsLib && window.lucide) {
+                    initializeApp();
+                } else {
+                    setTimeout(waitForLibraries, 100);
+                }
+            };
+            waitForLibraries();
         });
     </script>
 </body>
