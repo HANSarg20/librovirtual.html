@@ -11,230 +11,174 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide-react@0.378.0/dist/lucide.min.js"></script>
     
-    <!-- Google Fonts: Inter para un look limpio -->
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- PDF.js de Mozilla para leer PDFs -->
+    <!-- PDF.js de Mozilla -->
     <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
 
     <style>
         :root {
-            /* Paleta de colores sobria y de alto contraste */
-            --background-dark: #000000;
-            --background-med: #111111;
-            --background-light: #1f1f1f;
-            --accent-color: #ffffff;
-            --text-color: #e5e7eb;
-            --text-muted: #9ca3af;
-            --border-color: #374151;
+            /* Paleta de colores inspirada en el diseño de referencia */
+            --background-main: #101d21;
+            --background-card: #1a2a2f;
+            --accent-primary: #1ed760;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #2a3f44;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background-dark);
-            color: var(--text-color);
-            overflow: hidden;
+            background-color: var(--background-main);
+            color: var(--text-primary);
         }
 
-        /* Estilo de barra de desplazamiento minimalista */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: var(--background-med); 
+            background: var(--background-main); 
         }
         ::-webkit-scrollbar-thumb {
             background-color: var(--border-color);
             border-radius: 8px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #4b5563;
+        
+        .section-title {
+            @apply text-2xl font-bold text-text-primary mb-4;
         }
 
-        /* Componentes de la UI */
+        .book-card {
+            @apply bg-background-card p-4 rounded-lg cursor-pointer transition-transform duration-200 hover:scale-105 flex flex-col;
+        }
+        
+        .book-cover-placeholder {
+            @apply w-full h-40 bg-gray-700 rounded-md mb-3 flex items-center justify-center text-center p-2;
+        }
+
         .control-btn {
-            @apply p-2 bg-background-light rounded-full text-text-color hover:bg-accent-color hover:text-background-dark transition-all duration-200;
-            border: 1px solid var(--border-color);
+            @apply p-2 bg-gray-700 rounded-full text-text-secondary hover:bg-accent-primary hover:text-white transition-all duration-200 focus:outline-none;
         }
-        .tab-btn {
-            @apply w-1/2 py-3 text-center font-semibold tracking-wide cursor-pointer transition-all duration-200 border-b-2;
-            border-color: var(--border-color);
-            color: var(--text-muted);
+        
+        .reader-view {
+            @apply fixed inset-0 z-50 bg-background-main flex flex-col transition-opacity duration-300;
         }
-        .tab-btn.active {
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-        .book-item {
-             @apply p-3 rounded-lg cursor-pointer transition-all duration-200 border border-transparent bg-background-med hover:bg-background-light;
-        }
-        .book-item.active {
-            background-color: var(--accent-color);
-            color: var(--background-dark);
-            font-weight: 600;
-        }
-        .category-title {
-            @apply text-lg font-bold text-accent-color tracking-wide mt-4 mb-2 border-b border-border-color pb-2;
-        }
-
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="app" class="flex flex-col md:flex-row h-screen">
+    <!-- Vista Principal de la Biblioteca (Feed) -->
+    <main id="libraryFeed" class="p-4 md:p-6">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Para ti</h1>
+            <button id="addBookBtn" class="bg-accent-primary text-background-main font-bold py-2 px-5 rounded-full hover:opacity-90 transition-all flex items-center">
+                <i data-lucide="plus" class="mr-1 h-5 w-5"></i>Añadir
+            </button>
+            <input type="file" id="fileInput" class="hidden" accept=".txt,.pdf">
+        </header>
 
-        <!-- Panel Izquierdo: Bibliotecas -->
-        <aside class="w-full md:w-1/3 lg:w-1/4 bg-background-med flex flex-col border-r border-border-color">
-            <header class="p-4 text-center border-b border-border-color">
-                <h1 class="text-2xl font-bold text-accent-color flex items-center justify-center">
-                    <i data-lucide="library" class="mr-2"></i>Biblioteca Virtual
-                </h1>
-            </header>
-            
-            <div class="flex">
-                <div id="myLibraryTab" class="tab-btn active">Mi Biblioteca</div>
-                <div id="publicLibraryTab" class="tab-btn">Pública</div>
+        <!-- Sección Mi Biblioteca -->
+        <section id="myLibrarySection" class="mb-10">
+            <h2 class="section-title">Mi Biblioteca</h2>
+            <div id="bookList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <!-- Los libros del usuario se insertarán aquí -->
+            </div>
+        </section>
+
+        <!-- Sección Biblioteca Pública -->
+        <section id="publicLibrarySection">
+            <h2 class="section-title">Biblioteca Pública</h2>
+            <div id="publicLibraryContent" class="space-y-8">
+                <!-- Las categorías y libros públicos se insertarán aquí -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Vista del Lector (Inicialmente oculta) -->
+    <div id="contentViewer" class="reader-view hidden">
+        <!-- Cabecera del Lector -->
+        <header class="flex-shrink-0 p-4 flex items-center justify-between border-b border-border-color">
+            <button id="closeReaderBtn" class="p-2 rounded-full hover:bg-gray-800">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </button>
+            <h2 id="bookTitle" class="text-xl font-bold text-white truncate w-3/4 text-center"></h2>
+            <div class="w-10"></div> <!-- Espaciador -->
+        </header>
+
+        <!-- Controles y Contenido -->
+        <div class="flex-grow p-4 md:p-6 flex flex-col overflow-hidden">
+            <div id="controls" class="flex-shrink-0 bg-background-card p-3 rounded-lg mb-4 flex flex-wrap items-center gap-4 justify-between border border-border-color">
+                <div class="flex items-center gap-3">
+                    <button id="summarizeBtn" title="Resumir con IA" class="control-btn"><i data-lucide="brain-circuit"></i></button>
+                    <button id="playBtn" title="Reproducir" class="control-btn"><i data-lucide="play"></i></button>
+                    <button id="pauseBtn" title="Pausar" class="control-btn hidden"><i data-lucide="pause"></i></button>
+                    <button id="stopBtn" title="Detener" class="control-btn"><i data-lucide="stop-circle"></i></button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <select id="voiceSelect" class="bg-gray-800 text-white rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary"></select>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i data-lucide="gauge-circle"></i>
+                        <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1" class="w-24 cursor-pointer">
+                        <span id="speedValue" class="w-10 text-center">1.0x</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="deleteBookBtn" title="Eliminar Libro" class="control-btn"><i data-lucide="trash-2"></i></button>
+                </div>
             </div>
 
-            <div class="p-4 flex-grow overflow-y-auto">
-                <div id="myLibraryContent">
-                    <button id="addBookBtn" class="w-full bg-accent-color text-background-dark font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-all flex items-center justify-center mb-4">
-                        <i data-lucide="upload" class="mr-2"></i>
-                        Añadir Archivo
-                    </button>
-                    <input type="file" id="fileInput" class="hidden" accept=".txt,.pdf">
-                    <div id="bookList" class="space-y-2"></div>
+            <div class="flex-grow overflow-y-auto bg-background-card p-6 rounded-lg relative border border-border-color">
+                <div id="loadingOverlay" class="hidden absolute inset-0 bg-background-card bg-opacity-80 flex flex-col items-center justify-center z-10">
+                    <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <p class="mt-4 text-lg font-semibold">Procesando...</p>
                 </div>
-
-                <div id="publicLibraryContent" class="hidden">
-                    <!-- Las categorías y libros se insertarán aquí dinámicamente -->
-                </div>
+                <button id="showOriginalBtn" class="hidden mb-4 text-sm text-accent-primary hover:opacity-80 transition-all">&larr; Volver al texto original</button>
+                <p id="textContent" class="text-text-secondary text-lg leading-relaxed whitespace-pre-wrap"></p>
             </div>
-        </aside>
-
-        <!-- Panel Derecho: Visor -->
-        <main id="contentViewer" class="w-full md:w-2/3 lg:w-3/4 bg-background-dark flex flex-col p-4 md:p-8 overflow-hidden">
-             <div id="welcomeMessage" class="flex flex-col items-center justify-center h-full text-center text-text-muted">
-                <i data-lucide="book-open-check" class="w-24 h-24 mb-6 text-gray-500"></i>
-                <h2 class="text-3xl font-bold text-white">Bienvenido a tu Biblioteca</h2>
-                <p class="mt-2 text-lg max-w-md">Selecciona un texto para comenzar o añade tus propios archivos.</p>
-            </div>
-
-            <div id="bookContent" class="hidden flex-col h-full overflow-hidden">
-                <div class="flex-shrink-0 mb-4 pb-4 border-b border-border-color">
-                    <h2 id="bookTitle" class="text-3xl font-bold text-white truncate"></h2>
-                     <div class="flex items-center justify-between mt-2">
-                        <button id="showOriginalBtn" class="hidden text-sm text-accent-color hover:opacity-80 transition-all">&larr; Volver al texto original</button>
-                        <button id="deleteBookBtn" class="text-sm text-red-500 hover:text-red-400 transition-all flex items-center"><i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>Eliminar</button>
-                    </div>
-                </div>
-
-                <div id="controls" class="flex-shrink-0 bg-background-med p-3 rounded-lg mb-4 flex flex-wrap items-center gap-4 justify-between border border-border-color">
-                    <div class="flex items-center gap-3">
-                        <button id="summarizeBtn" title="Resumir con IA" class="control-btn"><i data-lucide="brain-circuit"></i></button>
-                        <button id="playBtn" title="Reproducir" class="control-btn"><i data-lucide="play"></i></button>
-                        <button id="pauseBtn" title="Pausar" class="control-btn hidden"><i data-lucide="pause"></i></button>
-                        <button id="stopBtn" title="Detener" class="control-btn"><i data-lucide="stop-circle"></i></button>
-                    </div>
-                    <div class="flex items-center gap-4 flex-grow md:flex-grow-0">
-                        <select id="voiceSelect" class="bg-background-light text-white rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-color"></select>
-                        <div class="flex items-center gap-2 text-sm">
-                            <i data-lucide="gauge-circle"></i>
-                            <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1" class="w-24 cursor-pointer">
-                            <span id="speedValue" class="w-10 text-center">1.0x</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="share('whatsapp')" title="Compartir en WhatsApp" class="control-btn"><i data-lucide="message-circle"></i></button>
-                        <button onclick="share('facebook')" title="Compartir en Facebook" class="control-btn"><i data-lucide="facebook"></i></button>
-                        <button onclick="share('copy')" title="Copiar Texto" class="control-btn"><i data-lucide="copy"></i></button>
-                    </div>
-                </div>
-
-                <div class="flex-grow overflow-y-auto bg-background-med p-6 rounded-lg relative border border-border-color">
-                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-background-dark bg-opacity-80 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
-                        <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <p class="mt-4 text-lg font-semibold">Procesando...</p>
-                    </div>
-                    <p id="textContent" class="text-text-color text-lg leading-relaxed whitespace-pre-wrap"></p>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <div id="toast" class="fixed bottom-5 right-5 bg-accent-color text-background-dark font-semibold py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300"></div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-accent-primary text-background-main font-semibold py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300"></div>
 
     <script>
-        // --- BIBLIOTECA PÚBLICA DE TEXTOS (REESTRUCTURADA) ---
         const publicLibrary = {
-            "Ciencia de la Computación": [
-                {
-                    title: "Algoritmos Fundamentales",
-                    content: `Un algoritmo es una secuencia de instrucciones para resolver un problema. Son la base de toda la programación. Características clave: finitud (debe terminar), definibilidad (pasos claros), entrada, salida y efectividad.`
-                },
-                {
-                    title: "Introducción a Redes (OSI)",
-                    content: `Una red conecta dispositivos para compartir recursos. El Modelo OSI es un marco conceptual que divide la comunicación de red en 7 capas, desde la física (cables) hasta la de aplicación (software).`
-                }
-            ],
-            "Física": [
-                {
-                    title: "Leyes del Movimiento de Newton",
-                    content: `1. Inercia: Un objeto permanece en su estado de movimiento a menos que una fuerza actúe sobre él.\n2. Fuerza: F = ma (Fuerza = masa × aceleración).\n3. Acción-Reacción: Para cada acción, hay una reacción igual y opuesta.`
-                }
-            ],
-            "Química": [
-                {
-                    title: "El Átomo y sus Partículas",
-                    content: `El átomo es la unidad básica de un elemento. Contiene un núcleo con protones (carga +) y neutrones (sin carga), y electrones (carga -) que orbitan el núcleo. El número de protones define el elemento.`
-                }
-            ],
-            "Álgebra": [
-                 {
-                    title: "Fórmula Cuadrática",
-                    content: `Se usa para resolver ecuaciones de la forma ax² + bx + c = 0. La solución es x = [-b ± sqrt(b²-4ac)] / 2a. El 'discriminante' (b²-4ac) determina el tipo de soluciones.`
-                }
-            ],
-            "Geometría": [
-                {
-                    title: "Teorema de Pitágoras",
-                    content: `En un triángulo rectángulo, el cuadrado de la hipotenusa (lado c) es igual a la suma de los cuadrados de los otros dos lados (a y b). Fórmula: a² + b² = c².`
-                }
-            ],
-             "Aritmética": [
-                {
-                    title: "Operaciones Básicas",
-                    content: `La aritmética es la rama más antigua de las matemáticas, centrada en el estudio de los números y las operaciones básicas: suma, resta, multiplicación y división. Estas operaciones son los pilares para todo cálculo matemático.`
-                }
-            ],
-            "Trigonometría": [
-                {
-                    title: "Funciones Trigonométricas",
-                    content: `La trigonometría estudia las relaciones entre los ángulos y los lados de los triángulos. Las tres funciones principales son:\n- Seno (sin): cateto opuesto / hipotenusa\n- Coseno (cos): cateto adyacente / hipotenusa\n- Tangente (tan): cateto opuesto / cateto adyacente`
-                }
-            ]
+            "Ciencia de la Computación": [{ title: "Algoritmos Fundamentales", content: `Un algoritmo es una secuencia de instrucciones para resolver un problema...` }, { title: "Introducción a Redes (OSI)", content: `Una red conecta dispositivos para compartir recursos...` }],
+            "Física": [{ title: "Leyes del Movimiento de Newton", content: `1. Inercia: Un objeto permanece en su estado de movimiento... 2. Fuerza: F = ma... 3. Acción-Reacción: Para cada acción, hay una reacción igual y opuesta.` }],
+            "Química": [{ title: "El Átomo y sus Partículas", content: `El átomo es la unidad básica de un elemento. Contiene un núcleo con protones (+), neutrones, y electrones (-) que lo orbitan.` }],
+            "Álgebra": [{ title: "Fórmula Cuadrática", content: `Para resolver ax² + bx + c = 0. La solución es x = [-b ± sqrt(b²-4ac)] / 2a.` }],
+            "Geometría": [{ title: "Teorema de Pitágoras", content: `En un triángulo rectángulo, a² + b² = c².` }],
+            "Aritmética": [{ title: "Operaciones Básicas", content: `Estudia la suma, resta, multiplicación y división.` }],
+            "Trigonometría": [{ title: "Funciones Trigonométricas", content: `Estudia las relaciones entre ángulos y lados. Funciones principales: Seno, Coseno, Tangente.` }]
         };
 
         function initializeApp() {
             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.worker.js`;
 
-            const myLibraryTab = document.getElementById('myLibraryTab');
-            const publicLibraryTab = document.getElementById('publicLibraryTab');
-            const myLibraryContent = document.getElementById('myLibraryContent');
-            const publicLibraryContent = document.getElementById('publicLibraryContent');
-            const bookList = document.getElementById('bookList');
+            // Vistas
+            const libraryFeed = document.getElementById('libraryFeed');
+            const contentViewer = document.getElementById('contentViewer');
+            
+            // Contenedores de listas
+            const bookListContainer = document.getElementById('bookList');
+            const publicLibraryContainer = document.getElementById('publicLibraryContent');
+
+            // Botones principales
             const addBookBtn = document.getElementById('addBookBtn');
             const fileInput = document.getElementById('fileInput');
-            const welcomeMessage = document.getElementById('welcomeMessage');
-            const bookContent = document.getElementById('bookContent');
+            const closeReaderBtn = document.getElementById('closeReaderBtn');
+
+            // Elementos del lector
             const bookTitle = document.getElementById('bookTitle');
             const textContent = document.getElementById('textContent');
             const summarizeBtn = document.getElementById('summarizeBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
             const showOriginalBtn = document.getElementById('showOriginalBtn');
             const deleteBookBtn = document.getElementById('deleteBookBtn');
+
+            // Controles de audio
             const playBtn = document.getElementById('playBtn');
             const pauseBtn = document.getElementById('pauseBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -244,8 +188,7 @@
             const toast = document.getElementById('toast');
 
             let userLibrary = [];
-            let currentBook = { id: null, source: null };
-            let originalContent = '';
+            let currentBook = { id: null, source: null, title: '', content: '' };
             let isSpeaking = false;
             let utterance = null;
             let voices = [];
@@ -261,207 +204,164 @@
                     speechSynthesis.onvoiceschanged = populateVoiceList;
                 }
             }
-            
-            function switchTab(tab) {
-                if (tab === 'my') {
-                    myLibraryTab.classList.add('active');
-                    publicLibraryTab.classList.remove('active');
-                    myLibraryContent.classList.remove('hidden');
-                    publicLibraryContent.classList.add('hidden');
-                } else {
-                    myLibraryTab.classList.remove('active');
-                    publicLibraryTab.classList.add('active');
-                    myLibraryContent.classList.add('hidden');
-                    publicLibraryContent.classList.remove('hidden');
-                }
-            }
 
-            function renderPublicLibrary() {
-                let html = '';
-                for (const category in publicLibrary) {
-                    html += `<h3 class="category-title">${category}</h3>`;
-                    html += '<div class="space-y-2">';
-                    publicLibrary[category].forEach((book, index) => {
-                        const bookId = `${category}-${index}`;
-                        html += `<div class="book-item" data-id="${bookId}" data-source="public">${book.title}</div>`;
-                    });
-                    html += '</div>';
-                }
-                publicLibraryContent.innerHTML = html;
-                
-                publicLibraryContent.querySelectorAll('.book-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
-                        const [category, index] = id.split('-');
-                        const book = publicLibrary[category][index];
-                        displayBook(id, 'public', book.title, book.content);
-                    });
-                });
-            }
-
-            function loadUserLibrary() {
-                const savedLibrary = localStorage.getItem('virtualLibrary');
-                userLibrary = savedLibrary ? JSON.parse(savedLibrary) : [];
-            }
-
-            function saveUserLibrary() {
-                localStorage.setItem('virtualLibrary', JSON.stringify(userLibrary));
+            function createBookCard(book) {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.innerHTML = `
+                    <div class="book-cover-placeholder">
+                        <i data-lucide="book-marked" class="w-12 h-12 text-gray-500"></i>
+                    </div>
+                    <h4 class="font-semibold truncate">${book.title}</h4>
+                    <p class="text-sm text-text-secondary">${book.source === 'user' ? 'Personal' : 'Público'}</p>
+                `;
+                card.addEventListener('click', () => showReader(book));
+                return card;
             }
 
             function renderUserBookList() {
-                bookList.innerHTML = '';
+                bookListContainer.innerHTML = '';
                 if (userLibrary.length === 0) {
-                    bookList.innerHTML = `<p class="text-text-muted text-center mt-4">Tu biblioteca está vacía.</p>`;
-                    return;
-                }
-                userLibrary.forEach(book => {
-                    const bookElement = document.createElement('div');
-                    bookElement.className = `book-item`;
-                    bookElement.textContent = book.title;
-                    bookElement.dataset.id = book.id;
-                    bookElement.dataset.source = 'user';
-                    bookElement.addEventListener('click', () => {
-                         const bookData = userLibrary.find(b => b.id === book.id);
-                         displayBook(bookData.id, 'user', bookData.title, bookData.content);
+                    bookListContainer.innerHTML = `<p class="text-text-secondary col-span-full">Tu biblioteca está vacía. Añade un libro para empezar.</p>`;
+                    document.getElementById('myLibrarySection').classList.add('hidden');
+                } else {
+                    document.getElementById('myLibrarySection').classList.remove('hidden');
+                    userLibrary.forEach(book => {
+                        const card = createBookCard(book);
+                        bookListContainer.appendChild(card);
                     });
-                    bookList.appendChild(bookElement);
-                });
-                updateActiveBookHighlight();
+                }
+                lucide.createIcons();
             }
 
-            function updateActiveBookHighlight() {
-                document.querySelectorAll('.book-item').forEach(item => {
-                    const isActive = item.dataset.id == currentBook.id && item.dataset.source === currentBook.source;
-                    item.classList.toggle('active', isActive);
+            function renderPublicLibrary() {
+                publicLibraryContainer.innerHTML = '';
+                for (const category in publicLibrary) {
+                    const categorySection = document.createElement('div');
+                    let booksHTML = '';
+                    publicLibrary[category].forEach((bookData, index) => {
+                        const book = { ...bookData, id: `${category.replace(/\s+/g, '_')}-${index}`, source: 'public' };
+                        const card = createBookCard(book);
+                        booksHTML += card.outerHTML;
+                    });
+                    categorySection.innerHTML = `
+                        <h3 class="text-xl font-bold mb-3">${category}</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">${booksHTML}</div>
+                    `;
+                    publicLibraryContainer.appendChild(categorySection);
+                }
+                // Re-asignar eventos porque outerHTML rompe las referencias
+                publicLibraryContainer.querySelectorAll('.book-card').forEach(cardElement => {
+                    cardElement.addEventListener('click', () => {
+                        const [categoryKey, index] = cardElement.dataset.id.split(/-(?=\d+$)/);
+                        const categoryName = categoryKey.replace(/_/g, ' ');
+                        const bookData = publicLibrary[categoryName][index];
+                        const book = { ...bookData, id: cardElement.dataset.id, source: 'public' };
+                        showReader(book);
+                    });
                 });
+
+                lucide.createIcons();
             }
 
-            function handleFileUpload(event) {
+            function loadUserLibrary() {
+                const savedLibrary = localStorage.getItem('virtualLibraryDB_v2');
+                userLibrary = savedLibrary ? JSON.parse(savedLibrary) : [];
+                userLibrary.forEach(book => book.source = 'user'); // Asegurar fuente
+            }
+
+            function saveUserLibrary() {
+                localStorage.setItem('virtualLibraryDB_v2', JSON.stringify(userLibrary));
+            }
+
+            async function handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-
                 loadingOverlay.classList.remove('hidden');
-
-                if (file.type === "text/plain") {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        addBookToLibrary(file.name.replace('.txt', ''), e.target.result);
-                        loadingOverlay.classList.add('hidden');
-                    };
-                    reader.readAsText(file);
-                } else if (file.type === "application/pdf") {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const typedarray = new Uint8Array(e.target.result);
-                        pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-                            let fullText = '';
-                            const numPages = pdf.numPages;
-                            let pagesPromises = Array.from({length: numPages}, (_, i) =>
-                                pdf.getPage(i + 1).then(page =>
-                                    page.getTextContent().then(textContent =>
-                                        textContent.items.map(item => item.str).join(' ')
-                                    )
-                                )
-                            );
-                            Promise.all(pagesPromises).then(pagesText => {
-                                fullText = pagesText.join('\n\n');
-                                addBookToLibrary(file.name.replace('.pdf', ''), fullText);
-                            }).catch(err => {
-                                console.error("Error procesando PDF:", err);
-                                showToast("Error al procesar el PDF.", "error");
-                            }).finally(() => {
-                                loadingOverlay.classList.add('hidden');
-                            });
-                        });
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    showToast("Formato no soportado. Sube .txt o .pdf", "error");
+                try {
+                    const title = file.name.replace(/\.(txt|pdf)$/i, '');
+                    let content = '';
+                    if (file.type === "text/plain") {
+                        content = await file.text();
+                    } else if (file.type === "application/pdf") {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            content += textContent.items.map(item => item.str).join(' ') + '\n\n';
+                        }
+                    } else {
+                        throw new Error("Formato no soportado.");
+                    }
+                    addBookToLibrary(title, content.trim());
+                } catch (error) {
+                    showToast(error.message, "error");
+                } finally {
                     loadingOverlay.classList.add('hidden');
+                    fileInput.value = '';
                 }
-                fileInput.value = '';
             }
 
             function addBookToLibrary(title, content) {
-                const newBook = { id: Date.now(), title, content };
+                const newBook = { id: Date.now(), title, content, source: 'user' };
                 userLibrary.push(newBook);
                 saveUserLibrary();
                 renderUserBookList();
-                displayBook(newBook.id, 'user', newBook.title, newBook.content);
-                switchTab('my');
+                showToast("Libro añadido con éxito");
             }
-            
-            function displayBook(id, source, title, content) {
-                currentBook = { id, source };
-                originalContent = content;
-                
-                welcomeMessage.classList.add('hidden');
-                bookContent.classList.remove('hidden');
-                bookContent.classList.add('flex');
-                
-                bookTitle.textContent = title;
-                textContent.textContent = content;
-                
-                deleteBookBtn.style.display = source === 'user' ? 'flex' : 'none';
-                
+
+            function showReader(book) {
+                currentBook = book;
+                bookTitle.textContent = book.title;
+                textContent.textContent = book.content;
+                deleteBookBtn.style.display = book.source === 'user' ? 'block' : 'none';
                 showOriginalBtn.classList.add('hidden');
                 stopSpeech();
-                updateActiveBookHighlight();
+                
+                libraryFeed.classList.add('hidden');
+                contentViewer.classList.remove('hidden');
+            }
+
+            function closeReader() {
+                libraryFeed.classList.remove('hidden');
+                contentViewer.classList.add('hidden');
+                currentBook = { id: null, source: null, title: '', content: '' };
+                stopSpeech();
             }
 
             function deleteCurrentBook() {
                 if (!currentBook.id || currentBook.source !== 'user') return;
-                
-                const bookToDelete = userLibrary.find(b => b.id === currentBook.id);
-                if (confirm(`¿Confirmas la eliminación de "${bookToDelete.title}"?`)) {
+                if (confirm(`¿Confirmas la eliminación de "${currentBook.title}"?`)) {
                     userLibrary = userLibrary.filter(b => b.id !== currentBook.id);
-                    currentBook = { id: null, source: null };
                     saveUserLibrary();
                     renderUserBookList();
-                    
-                    bookContent.classList.add('hidden');
-                    bookContent.classList.remove('flex');
-                    welcomeMessage.classList.remove('hidden');
-                    stopSpeech();
+                    closeReader();
+                    showToast("Libro eliminado");
                 }
             }
 
+            // ... (El resto de funciones como summarizeText, playSpeech, etc. se mantienen igual, pero se adaptan al nuevo flujo)
             async function summarizeText() {
                 if (!currentBook.id) return;
-                const textToSummarize = originalContent;
-                if (textToSummarize.length < 50) {
-                     showToast("El texto es muy corto para resumir.", "error");
-                     return;
-                }
                 loadingOverlay.classList.remove('hidden');
                 summarizeBtn.disabled = true;
                 try {
-                    const prompt = `Resume el siguiente texto de forma clara y concisa en español, extrayendo las ideas clave:\n\n---\n\n${textToSummarize}`;
+                    const prompt = `Resume el siguiente texto de forma clara y concisa en español:\n\n---\n\n${currentBook.content}`;
                     const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
                     const apiKey = ""; 
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
                     const result = await response.json();
                     if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                         textContent.textContent = result.candidates[0].content.parts[0].text;
                         showOriginalBtn.classList.remove('hidden');
-                    } else {
-                        throw new Error("Respuesta de API no válida.");
-                    }
-                } catch (error) {
-                    console.error("Error al resumir:", error);
-                    textContent.textContent = "Error: No se pudo generar el resumen.";
-                } finally {
-                    loadingOverlay.classList.add('hidden');
-                    summarizeBtn.disabled = false;
-                }
+                    } else { throw new Error("Respuesta de API no válida."); }
+                } catch (error) { textContent.textContent = "Error al generar el resumen."; }
+                finally { loadingOverlay.classList.add('hidden'); summarizeBtn.disabled = false; }
             }
-
+            
             function populateVoiceList() {
                 voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es'));
                 voiceSelect.innerHTML = voices.length ? '' : '<option>No hay voces en español</option>';
@@ -472,13 +372,9 @@
                     voiceSelect.appendChild(option);
                 });
             }
+
             function playSpeech() {
-                if (speechSynthesis.speaking) {
-                    speechSynthesis.resume();
-                    isSpeaking = true;
-                    updatePlayPauseButtons();
-                    return;
-                }
+                if (speechSynthesis.speaking) { speechSynthesis.resume(); isSpeaking = true; updatePlayPauseButtons(); return; }
                 utterance = new SpeechSynthesisUtterance(textContent.textContent);
                 const selectedVoice = voices.find(v => v.name === voiceSelect.selectedOptions[0]?.dataset.name);
                 if (selectedVoice) utterance.voice = selectedVoice;
@@ -488,49 +384,26 @@
                 utterance.onerror = () => { isSpeaking = false; updatePlayPauseButtons(); showToast("Error al reproducir audio.", "error"); };
                 speechSynthesis.speak(utterance);
             }
-            function pauseSpeech() {
-                speechSynthesis.pause();
-                isSpeaking = false;
-                updatePlayPauseButtons();
-            }
-            function stopSpeech() {
-                speechSynthesis.cancel();
-                isSpeaking = false;
-                updatePlayPauseButtons();
-            }
-            function updatePlayPauseButtons() {
-                playBtn.classList.toggle('hidden', isSpeaking);
-                pauseBtn.classList.toggle('hidden', !isSpeaking);
-            }
 
-            window.share = function(platform) {
-                let textToShare = window.getSelection().toString().trim() || textContent.textContent.substring(0, 280) + '...';
-                const encodedText = encodeURIComponent(textToShare);
-                const url = platform === 'whatsapp' ? `https://api.whatsapp.com/send?text=${encodedText}` : `https://www.facebook.com/sharer/sharer.php?u=example.com&quote=${encodedText}`;
-                if (platform === 'copy') {
-                    navigator.clipboard.writeText(textToShare).then(() => showToast("Texto copiado")).catch(() => showToast("No se pudo copiar", "error"));
-                } else {
-                    window.open(url, '_blank');
-                }
-            }
+            function pauseSpeech() { speechSynthesis.pause(); isSpeaking = false; updatePlayPauseButtons(); }
+            function stopSpeech() { speechSynthesis.cancel(); isSpeaking = false; updatePlayPauseButtons(); }
+            function updatePlayPauseButtons() { playBtn.classList.toggle('hidden', isSpeaking); pauseBtn.classList.toggle('hidden', !isSpeaking); }
+            
             function showToast(message, type = 'success') {
                 toast.textContent = message;
-                toast.style.backgroundColor = type === 'success' ? 'var(--accent-color)' : '#ef4444';
-                toast.style.color = type === 'success' ? 'var(--background-dark)' : '#ffffff';
+                toast.style.backgroundColor = type === 'success' ? 'var(--accent-primary)' : '#ef4444';
+                toast.style.color = type === 'success' ? 'var(--background-main)' : '#ffffff';
                 toast.classList.remove('opacity-0', 'translate-y-10');
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-10');
-                }, 3000);
+                setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10'); }, 3000);
             }
 
             function setupEventListeners() {
-                myLibraryTab.addEventListener('click', () => switchTab('my'));
-                publicLibraryTab.addEventListener('click', () => switchTab('public'));
                 addBookBtn.addEventListener('click', () => fileInput.click());
                 fileInput.addEventListener('change', handleFileUpload);
+                closeReaderBtn.addEventListener('click', closeReader);
                 summarizeBtn.addEventListener('click', summarizeText);
                 showOriginalBtn.addEventListener('click', () => {
-                    textContent.textContent = originalContent;
+                    textContent.textContent = currentBook.content;
                     showOriginalBtn.classList.add('hidden');
                 });
                 deleteBookBtn.addEventListener('click', deleteCurrentBook);
@@ -540,7 +413,7 @@
                 speedRange.addEventListener('input', e => {
                     const speed = parseFloat(e.target.value).toFixed(1);
                     speedValue.textContent = `${speed}x`;
-                    if (speechSynthesis.speaking) utterance.rate = speed;
+                    if (isSpeaking) { utterance.rate = speed; }
                 });
             }
 
