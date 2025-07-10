@@ -81,7 +81,7 @@
         </header>
 
         <!-- Sección Mi Biblioteca -->
-        <section id="myLibrarySection" class="mb-10">
+        <section id="myLibrarySection" class="mb-10 hidden">
             <h2 class="section-title">Mi Biblioteca</h2>
             <div id="bookList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 <!-- Los libros del usuario se insertarán aquí -->
@@ -144,41 +144,40 @@
     <div id="toast" class="fixed bottom-5 right-5 bg-accent-primary text-background-main font-semibold py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300"></div>
 
     <script>
-        const publicLibrary = {
-            "Ciencia de la Computación": [{ title: "Algoritmos Fundamentales", content: `Un algoritmo es una secuencia de instrucciones para resolver un problema...` }, { title: "Introducción a Redes (OSI)", content: `Una red conecta dispositivos para compartir recursos...` }],
-            "Física": [{ title: "Leyes del Movimiento de Newton", content: `1. Inercia: Un objeto permanece en su estado de movimiento... 2. Fuerza: F = ma... 3. Acción-Reacción: Para cada acción, hay una reacción igual y opuesta.` }],
-            "Química": [{ title: "El Átomo y sus Partículas", content: `El átomo es la unidad básica de un elemento. Contiene un núcleo con protones (+), neutrones, y electrones (-) que lo orbitan.` }],
-            "Álgebra": [{ title: "Fórmula Cuadrática", content: `Para resolver ax² + bx + c = 0. La solución es x = [-b ± sqrt(b²-4ac)] / 2a.` }],
-            "Geometría": [{ title: "Teorema de Pitágoras", content: `En un triángulo rectángulo, a² + b² = c².` }],
-            "Aritmética": [{ title: "Operaciones Básicas", content: `Estudia la suma, resta, multiplicación y división.` }],
-            "Trigonometría": [{ title: "Funciones Trigonométricas", content: `Estudia las relaciones entre ángulos y lados. Funciones principales: Seno, Coseno, Tangente.` }]
+        const publicLibraryData = {
+            "Ciencia de la Computación": [{ title: "Algoritmos Fundamentales", content: `Un algoritmo es una secuencia de instrucciones para resolver un problema. Son la base de toda la programación. Características clave: finitud (debe terminar), definibilidad (pasos claros), entrada, salida y efectividad.` }, { title: "Introducción a Redes (OSI)", content: `Una red conecta dispositivos para compartir recursos. El Modelo OSI es un marco conceptual que divide la comunicación de red en 7 capas, desde la física (cables) hasta la de aplicación (software).` }],
+            "Física": [{ title: "Leyes del Movimiento de Newton", content: `1. Inercia: Un objeto permanece en su estado de movimiento a menos que una fuerza actúe sobre él.\n2. Fuerza: F = ma (Fuerza = masa × aceleración).\n3. Acción-Reacción: Para cada acción, hay una reacción igual y opuesta.` }],
+            "Química": [{ title: "El Átomo y sus Partículas", content: `El átomo es la unidad básica de un elemento. Contiene un núcleo con protones (carga +) y neutrones (sin carga), y electrones (carga -) que orbitan el núcleo. El número de protones define el elemento.` }],
+            "Álgebra": [{ title: "Fórmula Cuadrática", content: `Se usa para resolver ecuaciones de la forma ax² + bx + c = 0. La solución es x = [-b ± sqrt(b²-4ac)] / 2a. El 'discriminante' (b²-4ac) determina el tipo de soluciones.` }],
+            "Geometría": [{ title: "Teorema de Pitágoras", content: `En un triángulo rectángulo, el cuadrado de la hipotenusa (lado c) es igual a la suma de los cuadrados de los otros dos lados (a y b). Fórmula: a² + b² = c².` }],
+            "Aritmética": [{ title: "Operaciones Básicas", content: `La aritmética es la rama más antigua de las matemáticas, centrada en el estudio de los números y las operaciones básicas: suma, resta, multiplicación y división.` }],
+            "Trigonometría": [{ title: "Funciones Trigonométricas", content: `La trigonometría estudia las relaciones entre los ángulos y los lados de los triángulos. Las tres funciones principales son:\n- Seno (sin): cateto opuesto / hipotenusa\n- Coseno (cos): cateto adyacente / hipotenusa\n- Tangente (tan): cateto opuesto / cateto adyacente` }]
         };
 
         function initializeApp() {
             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.worker.js`;
 
-            // Vistas
+            // Vistas y contenedores
             const libraryFeed = document.getElementById('libraryFeed');
             const contentViewer = document.getElementById('contentViewer');
-            
-            // Contenedores de listas
+            const myLibrarySection = document.getElementById('myLibrarySection');
             const bookListContainer = document.getElementById('bookList');
             const publicLibraryContainer = document.getElementById('publicLibraryContent');
-
+            
+            // Elementos del lector
+            const bookTitle = document.getElementById('bookTitle');
+            const textContent = document.getElementById('textContent');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const showOriginalBtn = document.getElementById('showOriginalBtn');
+            const deleteBookBtn = document.getElementById('deleteBookBtn');
+            const summarizeBtn = document.getElementById('summarizeBtn');
+            
             // Botones principales
             const addBookBtn = document.getElementById('addBookBtn');
             const fileInput = document.getElementById('fileInput');
             const closeReaderBtn = document.getElementById('closeReaderBtn');
 
-            // Elementos del lector
-            const bookTitle = document.getElementById('bookTitle');
-            const textContent = document.getElementById('textContent');
-            const summarizeBtn = document.getElementById('summarizeBtn');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const showOriginalBtn = document.getElementById('showOriginalBtn');
-            const deleteBookBtn = document.getElementById('deleteBookBtn');
-
-            // Controles de audio
+            // Controles de audio y notificaciones
             const playBtn = document.getElementById('playBtn');
             const pauseBtn = document.getElementById('pauseBtn');
             const stopBtn = document.getElementById('stopBtn');
@@ -188,15 +187,16 @@
             const toast = document.getElementById('toast');
 
             let userLibrary = [];
-            let currentBook = { id: null, source: null, title: '', content: '' };
+            let bookMap = {}; // Mapa para acceder a todos los libros por ID
+            let currentBook = null;
             let isSpeaking = false;
             let utterance = null;
             let voices = [];
 
             function init() {
+                buildBookMap();
                 loadUserLibrary();
-                renderUserBookList();
-                renderPublicLibrary();
+                renderAllBooks();
                 setupEventListeners();
                 lucide.createIcons();
                 populateVoiceList();
@@ -205,79 +205,75 @@
                 }
             }
 
-            function createBookCard(book) {
-                const card = document.createElement('div');
-                card.className = 'book-card';
-                card.innerHTML = `
-                    <div class="book-cover-placeholder">
-                        <i data-lucide="book-marked" class="w-12 h-12 text-gray-500"></i>
-                    </div>
-                    <h4 class="font-semibold truncate">${book.title}</h4>
-                    <p class="text-sm text-text-secondary">${book.source === 'user' ? 'Personal' : 'Público'}</p>
-                `;
-                card.addEventListener('click', () => showReader(book));
-                return card;
-            }
-
-            function renderUserBookList() {
-                bookListContainer.innerHTML = '';
-                if (userLibrary.length === 0) {
-                    bookListContainer.innerHTML = `<p class="text-text-secondary col-span-full">Tu biblioteca está vacía. Añade un libro para empezar.</p>`;
-                    document.getElementById('myLibrarySection').classList.add('hidden');
-                } else {
-                    document.getElementById('myLibrarySection').classList.remove('hidden');
-                    userLibrary.forEach(book => {
-                        const card = createBookCard(book);
-                        bookListContainer.appendChild(card);
+            // Centraliza todos los libros en un solo mapa para fácil acceso
+            function buildBookMap() {
+                bookMap = {};
+                for (const category in publicLibraryData) {
+                    publicLibraryData[category].forEach((bookData, index) => {
+                        const id = `public_${category.replace(/\s+/g, '_')}_${index}`;
+                        bookMap[id] = { ...bookData, id, source: 'public' };
                     });
                 }
-                lucide.createIcons();
             }
 
-            function renderPublicLibrary() {
+            function createBookCard(book) {
+                return `
+                    <div class="book-card" data-id="${book.id}">
+                        <div class="book-cover-placeholder">
+                            <i data-lucide="book-marked" class="w-12 h-12 text-gray-500"></i>
+                        </div>
+                        <h4 class="font-semibold truncate">${book.title}</h4>
+                        <p class="text-sm text-text-secondary">${book.source === 'user' ? 'Personal' : 'Público'}</p>
+                    </div>
+                `;
+            }
+
+            function renderAllBooks() {
+                // Renderizar biblioteca pública
                 publicLibraryContainer.innerHTML = '';
-                for (const category in publicLibrary) {
+                for (const category in publicLibraryData) {
                     const categorySection = document.createElement('div');
-                    let booksHTML = '';
-                    publicLibrary[category].forEach((bookData, index) => {
-                        const book = { ...bookData, id: `${category.replace(/\s+/g, '_')}-${index}`, source: 'public' };
-                        const card = createBookCard(book);
-                        booksHTML += card.outerHTML;
-                    });
+                    const booksHTML = publicLibraryData[category].map((bookData, index) => {
+                        const id = `public_${category.replace(/\s+/g, '_')}_${index}`;
+                        return createBookCard(bookMap[id]);
+                    }).join('');
+                    
                     categorySection.innerHTML = `
                         <h3 class="text-xl font-bold mb-3">${category}</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">${booksHTML}</div>
                     `;
                     publicLibraryContainer.appendChild(categorySection);
                 }
-                // Re-asignar eventos porque outerHTML rompe las referencias
-                publicLibraryContainer.querySelectorAll('.book-card').forEach(cardElement => {
-                    cardElement.addEventListener('click', () => {
-                        const [categoryKey, index] = cardElement.dataset.id.split(/-(?=\d+$)/);
-                        const categoryName = categoryKey.replace(/_/g, ' ');
-                        const bookData = publicLibrary[categoryName][index];
-                        const book = { ...bookData, id: cardElement.dataset.id, source: 'public' };
-                        showReader(book);
-                    });
-                });
 
+                // Renderizar biblioteca del usuario
+                if (userLibrary.length === 0) {
+                    myLibrarySection.classList.add('hidden');
+                } else {
+                    myLibrarySection.classList.remove('hidden');
+                    bookListContainer.innerHTML = userLibrary.map(book => createBookCard(book)).join('');
+                }
                 lucide.createIcons();
             }
 
             function loadUserLibrary() {
-                const savedLibrary = localStorage.getItem('virtualLibraryDB_v2');
+                const savedLibrary = localStorage.getItem('virtualLibraryDB_v3');
                 userLibrary = savedLibrary ? JSON.parse(savedLibrary) : [];
-                userLibrary.forEach(book => book.source = 'user'); // Asegurar fuente
+                userLibrary.forEach(book => {
+                    bookMap[book.id] = book; // Añadir libros de usuario al mapa
+                });
             }
 
             function saveUserLibrary() {
-                localStorage.setItem('virtualLibraryDB_v2', JSON.stringify(userLibrary));
+                localStorage.setItem('virtualLibraryDB_v3', JSON.stringify(userLibrary));
             }
 
             async function handleFileUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
                 loadingOverlay.classList.remove('hidden');
+                contentViewer.classList.remove('hidden'); // Mostrar el lector con el overlay
+                libraryFeed.classList.add('hidden');
+                
                 try {
                     const title = file.name.replace(/\.(txt|pdf)$/i, '');
                     let content = '';
@@ -298,16 +294,16 @@
                 } catch (error) {
                     showToast(error.message, "error");
                 } finally {
-                    loadingOverlay.classList.add('hidden');
-                    fileInput.value = '';
+                    closeReader(); // Volver al feed después de la carga
                 }
             }
 
             function addBookToLibrary(title, content) {
-                const newBook = { id: Date.now(), title, content, source: 'user' };
+                const newBook = { id: `user_${Date.now()}`, title, content, source: 'user' };
                 userLibrary.push(newBook);
+                bookMap[newBook.id] = newBook;
                 saveUserLibrary();
-                renderUserBookList();
+                renderAllBooks();
                 showToast("Libro añadido con éxito");
             }
 
@@ -315,7 +311,7 @@
                 currentBook = book;
                 bookTitle.textContent = book.title;
                 textContent.textContent = book.content;
-                deleteBookBtn.style.display = book.source === 'user' ? 'block' : 'none';
+                deleteBookBtn.style.display = book.source === 'user' ? 'flex' : 'none';
                 showOriginalBtn.classList.add('hidden');
                 stopSpeech();
                 
@@ -326,24 +322,24 @@
             function closeReader() {
                 libraryFeed.classList.remove('hidden');
                 contentViewer.classList.add('hidden');
-                currentBook = { id: null, source: null, title: '', content: '' };
+                currentBook = null;
                 stopSpeech();
             }
 
             function deleteCurrentBook() {
-                if (!currentBook.id || currentBook.source !== 'user') return;
+                if (!currentBook || currentBook.source !== 'user') return;
                 if (confirm(`¿Confirmas la eliminación de "${currentBook.title}"?`)) {
                     userLibrary = userLibrary.filter(b => b.id !== currentBook.id);
+                    delete bookMap[currentBook.id];
                     saveUserLibrary();
-                    renderUserBookList();
+                    renderAllBooks();
                     closeReader();
                     showToast("Libro eliminado");
                 }
             }
 
-            // ... (El resto de funciones como summarizeText, playSpeech, etc. se mantienen igual, pero se adaptan al nuevo flujo)
             async function summarizeText() {
-                if (!currentBook.id) return;
+                if (!currentBook) return;
                 loadingOverlay.classList.remove('hidden');
                 summarizeBtn.disabled = true;
                 try {
@@ -386,7 +382,7 @@
             }
 
             function pauseSpeech() { speechSynthesis.pause(); isSpeaking = false; updatePlayPauseButtons(); }
-            function stopSpeech() { speechSynthesis.cancel(); isSpeaking = false; updatePlayPauseButtons(); }
+            function stopSpeech() { if(speechSynthesis.speaking) speechSynthesis.cancel(); isSpeaking = false; updatePlayPauseButtons(); }
             function updatePlayPauseButtons() { playBtn.classList.toggle('hidden', isSpeaking); pauseBtn.classList.toggle('hidden', !isSpeaking); }
             
             function showToast(message, type = 'success') {
@@ -398,6 +394,18 @@
             }
 
             function setupEventListeners() {
+                // Evento delegado para todas las tarjetas de libros
+                libraryFeed.addEventListener('click', (event) => {
+                    const card = event.target.closest('.book-card');
+                    if (card) {
+                        const bookId = card.dataset.id;
+                        const book = bookMap[bookId];
+                        if (book) {
+                            showReader(book);
+                        }
+                    }
+                });
+
                 addBookBtn.addEventListener('click', () => fileInput.click());
                 fileInput.addEventListener('change', handleFileUpload);
                 closeReaderBtn.addEventListener('click', closeReader);
